@@ -1,0 +1,30 @@
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\bin\Release\FilterBro.exe.config
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\bin\Release\FilterBro.exe
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\bin\Release\FilterBro.pdb
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\bin\Release\Newtonsoft.Json.dll
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\bin\Release\Octokit.dll
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\bin\Release\Newtonsoft.Json.xml
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\bin\Release\Octokit.xml
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.csprojResolveAssemblyReference.cache
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.CustomSounds.resources
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.frmFilterBro.resources
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.Properties.Resources.resources
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.csproj.GenerateResource.Cache
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.exe
+D:\Google Drive\Projects\C#\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.pdb
+D:\GitHub\FilterBro\FilterBro\FilterBro\bin\Release\FilterBro.exe.config
+D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.exe
+D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.pdb
+D:\GitHub\FilterBro\FilterBro\FilterBro\bin\Release\FilterBro.exe
+D:\GitHub\FilterBro\FilterBro\FilterBro\bin\Release\FilterBro.pdb
+D:\GitHub\FilterBro\FilterBro\FilterBro\bin\Release\Newtonsoft.Json.dll
+D:\GitHub\FilterBro\FilterBro\FilterBro\bin\Release\Octokit.dll
+D:\GitHub\FilterBro\FilterBro\FilterBro\bin\Release\Newtonsoft.Json.xml
+D:\GitHub\FilterBro\FilterBro\FilterBro\bin\Release\Octokit.xml
+D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.csprojResolveAssemblyReference.cache
+D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.frmFilterBro.resources
+D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.Properties.Resources.resources
+D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.csproj.GenerateResource.Cache
+D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.frmCustomSounds.resources
+D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Release\Interop.WMPLib.dll
+D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Release\FilterBro.csproj.ResolveComReference.cache
