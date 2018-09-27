@@ -45,6 +45,9 @@ namespace FilterBro
             lstCustomSounds = new List<string>();
 
             lblEditingFor.Text = "Editing custom sounds for " + frmParent.GetSelectedFilter();
+
+            // For now, hide the default sound preview button
+            btnPreviewReplace.Visible = false;
         }
 
         /*
