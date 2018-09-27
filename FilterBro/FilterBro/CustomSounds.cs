@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Media;
@@ -65,30 +66,47 @@ namespace FilterBro
                 //File.WriteAllText(Path.Combine(frmFilterBro.strPathOfExilePath, Path.GetFileNameWithoutExtension(filter) + "-custom.filter"), strFilterContents);
                 File.WriteAllText(filter, strFilterContents);
             }
-
+            dictReplaceActions.Clear();
+            dgvActions.Rows.Clear();
             MessageBox.Show("Filters updated successully!");
         }
 
         private void frmCustomSounds2_Load(object sender, EventArgs e)
         {
-            // Add the default sounds. In future updates, if GGG adds more sounds
-            // all we need to do is get the files, rename them like the others,
-            // and increment this number.
-            for (int i=1; i <= 16; i++)
+            // Add the default sounds that appear in the selected filter
+            List<string> filters = frmParent.GetSelectedFilterFiles();
+            foreach (string filter in filters)
             {
-                string strDisplay = "Alert Sound " + i;
-                lstDefaultSounds.Add(strDisplay);
-                dictDefaultSounds.Add(strDisplay, "AlertSound" + i + ".mp3");
-                dictDefaultText.Add(strDisplay, "PlayAlertSound " + i + " ");
+                // Open the filter files relevant to the currently selected filter
+                string contents = "";
+                StreamReader sr = new StreamReader(filter);
+                contents = sr.ReadToEnd();
+                sr.Close();
+                // Scan for any PlayAlertSound # occurrences
+                Regex ItemRegex = new Regex(@"PlayAlertSound \d{1,}", RegexOptions.Compiled);
+                foreach (Match match in ItemRegex.Matches(contents))
+                {
+                    // Get the number
+                    string strAlertSound = Regex.Match(match.Value, @"\d{1,}").Value.ToString().Trim();
+                    // If the number doesn't exist in the list, add it
+                    if (!lstDefaultSounds.Contains<string>("Alert Sound " + strAlertSound))
+                    {
+                        string strDisplay = "Alert Sound " + strAlertSound;
+                        lstDefaultSounds.Add(strDisplay);
+                        dictDefaultSounds.Add(strDisplay, "AlertSound" + strAlertSound + ".mp3");
+                        dictDefaultText.Add(strDisplay, "PlayAlertSound " + strAlertSound + " ");
+                    }
+                }
             }
+
+            // Sort the found default sounds
+            lstDefaultSounds = lstDefaultSounds.OrderBy(s => int.Parse(s.Substring(12))).ToList<string>();
 
             // For every audio file in the PoE directory, add it to the list. Add any other popular
             // file extensions here.
             foreach (string sound in Directory.GetFiles(frmFilterBro.strPathOfExilePath, "*.*")
                 .Where(s => strSupportedExtensions.Contains(Path.GetExtension(s).ToLower())))
-            {
-                lstCustomSounds.Add(Path.GetFileName(sound));
-            }
+                    lstCustomSounds.Add(Path.GetFileName(sound));
 
             // Populate our combo boxes
             cboReplace.DataSource = lstDefaultSounds;

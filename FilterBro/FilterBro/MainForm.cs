@@ -98,6 +98,25 @@ namespace FilterBro
          */
         private void CheckFilterVersionLocal()
         {
+            lblStatus.Text = "Refreshing....";
+            lblStatus.Refresh();
+
+            // Mark all custom filters for removal
+            List<object> lstComboItemsToRemove = new List<object>();
+            foreach(var item in cboFilterSelector.Items)
+            {
+                if (IsCustomFilter(item.ToString()))
+                    lstComboItemsToRemove.Add(item.ToString());
+            }
+            // Remove all marked custom filters from the combobox
+            foreach (var item in lstComboItemsToRemove)
+                cboFilterSelector.Items.Remove(item);
+            // If we removed the selected item from the combobox, default to the first item
+            try
+            {
+                string tmp = cboFilterSelector.SelectedItem.GetType().ToString();
+            } catch (NullReferenceException) { cboFilterSelector.SelectedIndex = 0; }
+
             // Reinstantiate the list of installed filters
             this.dictLocalVersions = new Dictionary<string, string>();
             this.dictLocalFiles = new Dictionary<string, List<string>>();
@@ -155,7 +174,41 @@ namespace FilterBro
                         }
                     }
                 }
+                else // If we don't match any regex, add this filter on its own
+                {
+                    try
+                    {
+                        string customFilter = Path.GetFileNameWithoutExtension(filter);
+                        dictLocalFiles.Add(customFilter, new List<string>());
+                        dictLocalFiles[customFilter].Add(filter);
+                        cboFilterSelector.Items.Add(customFilter);
+                    }
+                    catch (ArgumentException) { }
+                }
             }
+
+            lblStatus.Text = "";
+            lblStatus.Refresh();
+        }
+
+        /*
+         * Checks to see if the passed-in filter is a custom filter or a built-in (supported) filter.
+         */
+        public bool IsCustomFilter()
+        {
+            try
+            {
+                return !dictGHMap.Keys.Contains(cboFilterSelector.SelectedItem.ToString());
+            } catch (NullReferenceException) { return true; }
+        }
+
+        public bool IsCustomFilter(string filter)
+        {
+            try
+            { 
+                return !dictGHMap.Keys.Contains(filter);
+            }
+            catch (NullReferenceException) { return true; }
         }
 
         /*
@@ -167,15 +220,31 @@ namespace FilterBro
             txtCurrentVersion.Text = "";
             txtLatestVersion.Text = "";
 
-            if (dictLocalVersions.ContainsKey(cboFilterSelector.SelectedItem.ToString()))
+            if (IsCustomFilter())
             {
-                txtCurrentVersion.Text = dictLocalVersions[cboFilterSelector.SelectedItem.ToString()];
-                btnCheckUpdate.Text = "Check for Update";
+                txtCurrentVersion.Text = "N/A";
+                btnCheckUpdate.Text = "Install";
+
+                // Disable update/reinstall on a custom filter
+                btnCheckUpdate.Enabled = false;
+                btnReinstall.Enabled = false;
             }
             else
             {
-                txtCurrentVersion.Text = "Not Installed";
-                btnCheckUpdate.Text = "Install";
+                // Enable update/reinstall if it is a supported filter
+                btnCheckUpdate.Enabled = true;
+                btnReinstall.Enabled = true;
+
+                if (dictLocalVersions.ContainsKey(cboFilterSelector.SelectedItem.ToString()))
+                {
+                    txtCurrentVersion.Text = dictLocalVersions[cboFilterSelector.SelectedItem.ToString()];
+                    btnCheckUpdate.Text = "Check for Update";
+                }
+                else
+                {
+                    txtCurrentVersion.Text = "Not Installed";
+                    btnCheckUpdate.Text = "Install";
+                }
             }
 
             lblStatus.Text = "";
@@ -306,31 +375,63 @@ namespace FilterBro
         {
             if (cboFilterSelector.Enabled)
             {
-                lblStatus.Text = "Checking for update....";
-                cboFilterSelector.Enabled = false;
-                // Get latest release from GitHub based on combobox currently selected item
-                if (dictGHMap.ContainsKey(cboFilterSelector.SelectedItem.ToString()))
+                if (IsCustomFilter())
                 {
-                    // We need to make sure that there is a GitHub project for this filter, which there should be.
-                    if (dictGHProjects.ContainsKey(dictGHMap[cboFilterSelector.SelectedItem.ToString()]))
+                    lblStatus.Text = "Cannot update custom filter.";
+                    lblStatus.Refresh();
+                }
+                else
+                {
+                    lblStatus.Text = "Checking for update....";
+                    cboFilterSelector.Enabled = false;
+                    // Get latest release from GitHub based on combobox currently selected item
+                    if (dictGHMap.ContainsKey(cboFilterSelector.SelectedItem.ToString()))
                     {
-                        // Connect to GitHub and get the latest version of the filter.
-                        GitHubClient gh = new GitHubClient(new ProductHeaderValue("FilterBro"));
-                        Release tmp = await gh.Repository.Release.GetLatest(dictGHProjects[dictGHMap[cboFilterSelector.SelectedItem.ToString()]],
-                            dictGHMap[cboFilterSelector.SelectedItem.ToString()]);
-                        txtLatestVersion.Text = tmp.TagName;
-
-                        if (!ignoreSameVersion)
+                        // We need to make sure that there is a GitHub project for this filter, which there should be.
+                        if (dictGHProjects.ContainsKey(dictGHMap[cboFilterSelector.SelectedItem.ToString()]))
                         {
-                            // If there is a newer version, ask the user if they want to update.
-                            if (txtCurrentVersion.Text != txtLatestVersion.Text)
+                            // Connect to GitHub and get the latest version of the filter.
+                            GitHubClient gh = new GitHubClient(new ProductHeaderValue("FilterBro"));
+                            Release tmp = await gh.Repository.Release.GetLatest(dictGHProjects[dictGHMap[cboFilterSelector.SelectedItem.ToString()]],
+                                dictGHMap[cboFilterSelector.SelectedItem.ToString()]);
+                            txtLatestVersion.Text = tmp.TagName;
+
+                            if (!ignoreSameVersion)
                             {
-                                DialogResult dialogResult = MessageBox.Show("There is a new update available for " 
-                                    + cboFilterSelector.SelectedItem.ToString() + "\nDo you want to update to the latest version?",
-                                    "Update Available", MessageBoxButtons.YesNo);
+                                // If there is a newer version, ask the user if they want to update.
+                                if (txtCurrentVersion.Text != txtLatestVersion.Text)
+                                {
+                                    DialogResult dialogResult = MessageBox.Show("There is a new update available for "
+                                        + cboFilterSelector.SelectedItem.ToString() + "\nDo you want to update to the latest version?",
+                                        "Update Available", MessageBoxButtons.YesNo);
+                                    if (dialogResult == DialogResult.Yes)
+                                    {
+                                        lblStatus.Text = "Updating....";
+                                        lblStatus.Refresh();
+                                        UpdateSelectedFilter(tmp.ZipballUrl, dictGHMap[cboFilterSelector.SelectedItem.ToString()]);
+                                    }
+                                    else
+                                    {
+                                        lblStatus.Text = "";
+                                        lblStatus.Refresh();
+                                        cboFilterSelector.Enabled = true;
+                                    }
+                                }
+                                else
+                                {
+                                    lblStatus.Text = "Filter is up to date.";
+                                    lblStatus.Refresh();
+                                    cboFilterSelector.Enabled = true;
+                                }
+                            }
+                            else
+                            {
+                                // If we ignore the fact that the versions match, we prompt the user if they want to reinstall the filter.
+                                DialogResult dialogResult = MessageBox.Show("Do you want to reinstall " + cboFilterSelector.SelectedItem.ToString()
+                                    + "?", "Confirm Reinstall", MessageBoxButtons.YesNo);
                                 if (dialogResult == DialogResult.Yes)
                                 {
-                                    lblStatus.Text = "Updating....";
+                                    lblStatus.Text = "Reinstalling....";
                                     lblStatus.Refresh();
                                     UpdateSelectedFilter(tmp.ZipballUrl, dictGHMap[cboFilterSelector.SelectedItem.ToString()]);
                                 }
@@ -341,44 +442,20 @@ namespace FilterBro
                                     cboFilterSelector.Enabled = true;
                                 }
                             }
-                            else
-                            {
-                                lblStatus.Text = "Filter is up to date.";
-                                lblStatus.Refresh();
-                                cboFilterSelector.Enabled = true;
-                            }
                         }
                         else
                         {
-                            // If we ignore the fact that the versions match, we prompt the user if they want to reinstall the filter.
-                            DialogResult dialogResult = MessageBox.Show("Do you want to reinstall " + cboFilterSelector.SelectedItem.ToString() 
-                                + "?", "Confirm Reinstall", MessageBoxButtons.YesNo);
-                            if (dialogResult == DialogResult.Yes)
-                            {
-                                lblStatus.Text = "Reinstalling....";
-                                lblStatus.Refresh();
-                                UpdateSelectedFilter(tmp.ZipballUrl, dictGHMap[cboFilterSelector.SelectedItem.ToString()]);
-                            }
-                            else
-                            {
-                                lblStatus.Text = "";
-                                lblStatus.Refresh();
-                                cboFilterSelector.Enabled = true;
-                            }
+                            lblStatus.Text = "Update URL Not Found!";
+                            lblStatus.Refresh();
+                            cboFilterSelector.Enabled = true;
                         }
                     }
                     else
                     {
-                        lblStatus.Text = "Update URL Not Found!";
+                        lblStatus.Text = "Update Map Not Found!";
                         lblStatus.Refresh();
                         cboFilterSelector.Enabled = true;
                     }
-                }
-                else
-                {
-                    lblStatus.Text = "Update Map Not Found!";
-                    lblStatus.Refresh();
-                    cboFilterSelector.Enabled = true;
                 }
             }
         }
@@ -453,8 +530,9 @@ namespace FilterBro
             if (cboFilterSelector.Enabled)
             {
                 cboFilterSelector.Enabled = false;
-                DialogResult dialogResult = MessageBox.Show("Are you sure you want to delete all filters for " 
-                    + cboFilterSelector.SelectedItem.ToString() + "?", "Confirm Delete", MessageBoxButtons.YesNo);
+                DialogResult dialogResult = MessageBox.Show(((IsCustomFilter()) ? "Are you sure you want to delete "
+                    + cboFilterSelector.SelectedItem.ToString() + "?" : "Are you sure you want to delete all filters for " 
+                    + cboFilterSelector.SelectedItem.ToString() + "?"), "Confirm Delete", MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
                     DeleteSelectedFilter();
                 else
