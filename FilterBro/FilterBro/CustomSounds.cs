@@ -45,9 +45,6 @@ namespace FilterBro
             lstCustomSounds = new List<string>();
 
             lblEditingFor.Text = "Editing custom sounds for " + frmParent.GetSelectedFilter();
-
-            // For now, hide the default sound preview button
-            btnPreviewReplace.Visible = false;
         }
 
         /*
@@ -118,6 +115,9 @@ namespace FilterBro
             // Get the DataGridView ready to accept data.
             dgvActions.Columns.Add("Replace", "Replace");
             dgvActions.Columns.Add("With", "With");
+
+            // Set the Replace preview button visibility, allowing users to provide the files
+            CheckReplaceSoundExists();
         }
 
         /*
@@ -138,7 +138,12 @@ namespace FilterBro
          */
         private void btnPreviewReplace_Click(object sender, EventArgs e)
         {
-            if (strStreamURL != "")
+            // Play the custom sound file located in the same folder as FilterBro
+            MediaPlayer snd = new MediaPlayer();
+            snd.Open(new System.Uri(dictDefaultSounds[cboReplace.SelectedItem.ToString()]));
+            snd.Play();
+            // Code for streaming from a URL
+            /*if (strStreamURL != "")
             {
                 // Play the built-in sound file relative to the location of FilterBro.exe
                 WindowsMediaPlayer snd = new WindowsMediaPlayer();
@@ -146,7 +151,7 @@ namespace FilterBro
                 snd.MediaError += new WMPLib._WMPOCXEvents_MediaErrorEventHandler(WebSoundErrorHandler);
                 snd.URL = strStreamURL + dictDefaultSounds[cboReplace.SelectedItem.ToString()];
                 snd.controls.play();
-            }
+            }*/
         }
 
         /*
@@ -245,6 +250,24 @@ namespace FilterBro
                 if (MessageBox.Show("Close the editor without applying the selected custom sounds?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.No)
                     e.Cancel = true;
             }
+        }
+
+        /*
+         * When the Replace combo box changes, check to see if we have the sound file.
+         */
+        private void cboReplace_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            CheckReplaceSoundExists();
+        }
+
+        /*
+         * Enables/disables the Replace Preview button based on whether the preview file exists.
+         */
+        private void CheckReplaceSoundExists()
+        {
+            bool blComboItemExists = File.Exists(dictDefaultSounds[cboReplace.SelectedItem.ToString()]);
+            btnPreviewReplace.Visible = blComboItemExists;
+            btnPreviewReplace.Enabled = blComboItemExists;
         }
     }
 }

@@ -57,6 +57,7 @@
             this.cboReplace.Name = "cboReplace";
             this.cboReplace.Size = new System.Drawing.Size(182, 21);
             this.cboReplace.TabIndex = 0;
+            this.cboReplace.SelectedIndexChanged += new System.EventHandler(this.cboReplace_SelectedIndexChanged);
             // 
             // lblReplace
             // 
