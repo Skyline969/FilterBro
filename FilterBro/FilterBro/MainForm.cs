@@ -34,6 +34,10 @@ namespace FilterBro
         // Where FilterBro stores its stuff. Just a subfolder in the Path of Exile folder.
         public static string strFilterBroPath = Path.Combine(strPathOfExilePath, "FilterBro");
 
+        // Regex for FilterBro-downloaded filters
+        Regex rg_FilterBro_title = new Regex(@"\#\s{0,}FilterBro-X-Filter\:.*");
+        Regex rg_FilterBro_version = new Regex(@"\#\s{0,}FilterBro-X-Version\:.*");
+
         // Regex for NeverSink's filter
         Regex rg_NeverSink_title = new Regex(@"\#\s{0,}NeverSink's Indepth Loot Filter.*");
         Regex rg_NeverSink_version = new Regex(@"\#\s{0,}VERSION\:.*");
@@ -62,9 +66,11 @@ namespace FilterBro
             cboFilterSelector.Items.Add("NeverSink's Item Filter - Slick");
             cboFilterSelector.Items.Add("NeverSink's Item Filter - Vaal");
             cboFilterSelector.Items.Add("NeverSink's Item Filter - Velvet");
+            cboFilterSelector.Items.Add("One Filter to Rule Them All");
 
             // Add GitHub projects
             dictGHProjects.Add("NeverSink-Filter", "NeverSinkDev");
+            dictGHProjects.Add("OFTRTA-poe-filter", "noraj");
 
             // Map filter items to projects
             dictGHMap.Add("NeverSink's Item Filter - Regular", "NeverSink-Filter");
@@ -74,6 +80,7 @@ namespace FilterBro
             dictGHMap.Add("NeverSink's Item Filter - Slick", "NeverSink-Filter");
             dictGHMap.Add("NeverSink's Item Filter - Vaal", "NeverSink-Filter");
             dictGHMap.Add("NeverSink's Item Filter - Velvet", "NeverSink-Filter");
+            dictGHMap.Add("One Filter to Rule Them All", "OFTRTA-poe-filter");
 
             // Select the first filter
             cboFilterSelector.SelectedIndex = 0;
@@ -133,48 +140,29 @@ namespace FilterBro
                 contents = sr.ReadToEnd();
                 sr.Close();
 
-                Match nsFilterMatch = rg_NeverSink_title.Match(contents);
-                if (nsFilterMatch.Success)
+                // Load the FilterBro header from the filter
+                Match fbFilterMatch = rg_FilterBro_title.Match(contents);
+                Match fbFilterVersionMatch = rg_FilterBro_version.Match(contents);
+                if (fbFilterMatch.Success && fbFilterVersionMatch.Success)
                 {
-                    // We found a NeverSink filter
-                    Match nsFilterVersionMatch = rg_NeverSink_version.Match(contents);
-                    Match nsFilterStyleMatch = rg_NeverSink_style.Match(contents);
-                    if (nsFilterVersionMatch.Success && nsFilterStyleMatch.Success)
+                    string strFBTitle = Regex.Match(fbFilterMatch.Value, @"(\#\s{0,}FilterBro-X-Filter\:\s{0,})(.*$)").Groups[2].Value;
+                    string strFBVersion = Regex.Match(fbFilterVersionMatch.Value, @"(\#\s{0,}FilterBro-X-Version\:\s{0,})(.*$)").Groups[2].Value;
+
+                    try
                     {
-                        string foundVersion = Regex.Match(nsFilterVersionMatch.Value, @"([-+]?[0-9]*\.?[0-9]+)").Groups[1].Value;
-                        string tmpKey = "";
-                        if (nsFilterStyleMatch.Value.Contains("NORMAL"))
-                            tmpKey = "NeverSink's Item Filter - Regular";
-                        else if (nsFilterStyleMatch.Value.Contains("BLUE"))
-                            tmpKey = "NeverSink's Item Filter - Blue";
-                        else if (nsFilterStyleMatch.Value.Contains("GAIA"))
-                            tmpKey = "NeverSink's Item Filter - Gaia";
-                        else if (nsFilterStyleMatch.Value.Contains("PURPLE"))
-                            tmpKey = "NeverSink's Item Filter - Purple";
-                        else if (nsFilterStyleMatch.Value.Contains("SLICK"))
-                            tmpKey = "NeverSink's Item Filter - Slick";
-                        else if (nsFilterStyleMatch.Value.Contains("VAAL"))
-                            tmpKey = "NeverSink's Item Filter - Vaal";
-                        else if (nsFilterStyleMatch.Value.Contains("VELVET"))
-                            tmpKey = "NeverSink's Item Filter - Velvet";
-
-                        if (tmpKey != "")
-                        {
-                            try {
-                                dictLocalVersions.Add(tmpKey, foundVersion);
-                            }
-                            catch (ArgumentException) { } // Just means that filter was already added, likely searching the different filter types
-
-                            try {
-                                if (!dictLocalFiles.ContainsKey(tmpKey))
-                                    dictLocalFiles.Add(tmpKey, new List<string>());
-                                dictLocalFiles[tmpKey].Add(filter);
-                            }
-                            catch (ArgumentException) { } // Just means that filter was already added, likely searching the different filter types
-                        }
+                        dictLocalVersions.Add(strFBTitle, strFBVersion);
                     }
+                    catch (ArgumentException) { } // Just means that filter was already added, likely searching the different filter types
+
+                    try
+                    {
+                        if (!dictLocalFiles.ContainsKey(strFBTitle))
+                            dictLocalFiles.Add(strFBTitle, new List<string>());
+                        dictLocalFiles[strFBTitle].Add(filter);
+                    }
+                    catch (ArgumentException) { } // Just means that filter was already added, likely searching the different filter types
                 }
-                else // If we don't match any regex, add this filter on its own
+                else // If we don't match the FilterBro regex, add this filter on its own as a standalone filter
                 {
                     try
                     {
@@ -185,6 +173,65 @@ namespace FilterBro
                     }
                     catch (ArgumentException) { }
                 }
+                // Old code to handle reading headers on a filter-by-filter basis
+                // Since we have switched to FilterBro adding its own header and updating only filters
+                // it has downloaded itself, this code will likely be removed in the future.
+                /*else
+                {
+                    // If there is no FilterBro header, check the filter itself for metadata on a filter-by-filter basis
+                    Match nsFilterMatch = rg_NeverSink_title.Match(contents);
+                    if (nsFilterMatch.Success)
+                    {
+                        // We found a NeverSink filter
+                        Match nsFilterVersionMatch = rg_NeverSink_version.Match(contents);
+                        Match nsFilterStyleMatch = rg_NeverSink_style.Match(contents);
+                        if (nsFilterVersionMatch.Success && nsFilterStyleMatch.Success)
+                        {
+                            string foundVersion = Regex.Match(nsFilterVersionMatch.Value, @"([-+]?[0-9]*\.?[0-9]+)").Groups[1].Value;
+                            string tmpKey = "";
+                            if (nsFilterStyleMatch.Value.Contains("NORMAL"))
+                                tmpKey = "NeverSink's Item Filter - Regular";
+                            else if (nsFilterStyleMatch.Value.Contains("BLUE"))
+                                tmpKey = "NeverSink's Item Filter - Blue";
+                            else if (nsFilterStyleMatch.Value.Contains("GAIA"))
+                                tmpKey = "NeverSink's Item Filter - Gaia";
+                            else if (nsFilterStyleMatch.Value.Contains("PURPLE"))
+                                tmpKey = "NeverSink's Item Filter - Purple";
+                            else if (nsFilterStyleMatch.Value.Contains("SLICK"))
+                                tmpKey = "NeverSink's Item Filter - Slick";
+                            else if (nsFilterStyleMatch.Value.Contains("VAAL"))
+                                tmpKey = "NeverSink's Item Filter - Vaal";
+                            else if (nsFilterStyleMatch.Value.Contains("VELVET"))
+                                tmpKey = "NeverSink's Item Filter - Velvet";
+
+                            if (tmpKey != "")
+                            {
+                                try {
+                                    dictLocalVersions.Add(tmpKey, foundVersion);
+                                }
+                                catch (ArgumentException) { } // Just means that filter was already added, likely searching the different filter types
+
+                                try {
+                                    if (!dictLocalFiles.ContainsKey(tmpKey))
+                                        dictLocalFiles.Add(tmpKey, new List<string>());
+                                    dictLocalFiles[tmpKey].Add(filter);
+                                }
+                                catch (ArgumentException) { } // Just means that filter was already added, likely searching the different filter types
+                            }
+                        }
+                    }
+                    else // If we don't match any regex, add this filter on its own
+                    {
+                        try
+                        {
+                            string customFilter = Path.GetFileNameWithoutExtension(filter);
+                            dictLocalFiles.Add(customFilter, new List<string>());
+                            dictLocalFiles[customFilter].Add(filter);
+                            cboFilterSelector.Items.Add(customFilter);
+                        }
+                        catch (ArgumentException) { }
+                    }
+                }*/
             }
 
             lblStatus.Text = "";
@@ -242,7 +289,7 @@ namespace FilterBro
                 }
                 else
                 {
-                    txtCurrentVersion.Text = "Not Installed";
+                    txtCurrentVersion.Text = "Not Installed via FilterBro";
                     btnCheckUpdate.Text = "Install";
                 }
             }
@@ -286,6 +333,7 @@ namespace FilterBro
             switch (cboFilterSelector.SelectedItem.ToString())
             {
                 case "NeverSink's Item Filter - Regular":
+                case "One Filter to Rule Them All":
                     filtersToCopy = Directory.GetFiles(strExtractDirectory, "*.filter");
                     break;
                 case "NeverSink's Item Filter - Blue":
@@ -322,7 +370,19 @@ namespace FilterBro
 
                 // Copy filters to Path of Exile directory
                 foreach (string filter in filtersToCopy)
+                {
+                    // Copy the file
                     File.Copy(filter, Path.Combine(strPathOfExilePath, Path.GetFileName(filter)), true);
+                    // Tack on a FilterBro tag to the filter for future ease of use
+                    // This allows us to add version numbers and such to filters that otherwise would not have them
+                    string strFilterHeader = "#==========================================================================\n"
+                                            + "# Filter downloaded with FilterBro\n"
+                                            + "# FilterBro-X-Filter:\t" + cboFilterSelector.SelectedItem.ToString() + "\n"
+                                            + "# FilterBro-X-Version:\t" + txtLatestVersion.Text + "\n"
+                                            + "#\n";
+                    string strFilterContents = File.ReadAllText(Path.Combine(strPathOfExilePath, Path.GetFileName(filter)));
+                    File.WriteAllText(Path.Combine(strPathOfExilePath, Path.GetFileName(filter)), strFilterHeader + strFilterContents);
+                }
             }
 
             lblStatus.Text = "Refreshing filters....";
@@ -546,7 +606,7 @@ namespace FilterBro
          */
         private void btnCustomSoundsOpen_Click(object sender, EventArgs e)
         {
-            if (txtCurrentVersion.Text != "Not Installed")
+            if (txtCurrentVersion.Text != "Not Installed via FilterBro")
             {
                 if (Directory.GetFiles(frmFilterBro.strPathOfExilePath, "*.*")
                     .Where(s => frmCustomSounds.strSupportedExtensions.Contains(Path.GetExtension(s).ToLower())).Count() > 0)
