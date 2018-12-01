@@ -20,7 +20,7 @@ namespace FilterBro
     public partial class frmFilterBro : Form
     {
         // Version string shows in the title bar
-        private static string VERSION = "1.0";
+        private static string VERSION = "1.1";
         // Stores a mapping of filter name : installed version
         private Dictionary<string, string> dictLocalVersions;
         // Stores a mapping of GitHub project : GitHub username
