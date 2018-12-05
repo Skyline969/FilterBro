@@ -155,9 +155,9 @@ namespace FilterBro
         private void btnPreviewReplace_Click(object sender, EventArgs e)
         {
             // Play the custom sound file located in the same folder as FilterBro
-            MediaPlayer snd = new MediaPlayer();
-            snd.Open(new System.Uri(dictDefaultSounds[cboReplace.SelectedItem.ToString()]));
-            snd.Play();
+            WindowsMediaPlayer snd = new WindowsMediaPlayer();
+            snd.URL = dictDefaultSounds[cboReplace.SelectedItem.ToString()];
+            snd.controls.play();
             // Code for streaming from a URL
             /*if (strStreamURL != "")
             {
