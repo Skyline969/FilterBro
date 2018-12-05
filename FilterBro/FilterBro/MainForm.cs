@@ -14,13 +14,19 @@ using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octokit;
+using System.Diagnostics;
 
 namespace FilterBro
 {
     public partial class frmFilterBro : Form
     {
-        // Version string shows in the title bar
+        // Version string shows in the title bar and is used to check for updates.
         private static string VERSION = "1.2";
+        // GitHub info for checking for updates
+        private static string GHDEV = "Skyline969";
+        private static string GHPROJ = "FilterBro";
+        // A flag for opening the FilterBro updater on close if there is a new version
+        private bool bInstallUpdate;
         // Stores a mapping of filter name : installed version
         private Dictionary<string, string> dictLocalVersions;
         // Stores a mapping of GitHub project : GitHub username
@@ -53,6 +59,7 @@ namespace FilterBro
             this.dictGHMap = new Dictionary<string, string>();
             this.dictLocalFiles = new Dictionary<string, List<string>>();
             this.dictFilterSounds = new Dictionary<string, Dictionary<string, string>>();
+            this.bInstallUpdate = false;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -98,8 +105,6 @@ namespace FilterBro
             // Load custom sounds from config file
             LoadCustomSounds();
 
-            //MessageBox.Show(JsonConvert.SerializeObject(dictFilterSounds));
-
             // Update the text box
             UpdateVersionTextBoxes();
 
@@ -108,6 +113,111 @@ namespace FilterBro
 
             // Shift focus away from the combo box as it highlights it
             this.ActiveControl = btnCheckUpdate;
+
+            // Check for a program update
+            CheckForApplicationUpdate();
+        }
+
+        private async void CheckForApplicationUpdate()
+        {
+            // Connect to GitHub and get the latest version of the application.
+            GitHubClient gh = new GitHubClient(new ProductHeaderValue("FilterBro"));
+            Release tmp = await gh.Repository.Release.GetLatest(GHDEV, GHPROJ);
+            if (VERSION != tmp.TagName)
+            {
+                if (MessageBox.Show("There is a new update available for FilterBro!\n\nVersion " + tmp.TagName + ":\n"
+                                        + tmp.Body + "\n\n"
+                                        +"Do you want to update to the latest version?",
+                                        "FilterBro Update", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    // Disable all other buttons to avoid any conflicting actions
+                    btnCheckUpdate.Enabled = false;
+                    btnCustomSoundsOpen.Enabled = false;
+                    btnDelete.Enabled = false;
+                    btnRefresh.Enabled = false;
+                    btnReinstall.Enabled = false;
+                    cboFilterSelector.Enabled = false;
+
+                    // Start downloading the program update
+                    lblStatus.Text = "Downloading FilterBro Update....";
+                    lblStatus.Refresh();
+                    string strExtractDirectory = "";
+                    // Download the file
+                    WebClient wbDownloader = new WebClient();
+                    wbDownloader.Headers.Add("user-agent", "FilterBro");
+                    System.IO.Directory.CreateDirectory(strFilterBroPath);
+                    wbDownloader.DownloadFile(tmp.Assets.First<ReleaseAsset>().BrowserDownloadUrl, Path.Combine(strFilterBroPath, "FilterBroUpdate.zip"));
+                    // Extract the file
+                    lblStatus.Text = "Extracting FilterBroUpdate.zip....";
+                    lblStatus.Refresh();
+                    using (ZipArchive zip = ZipFile.OpenRead(Path.Combine(strFilterBroPath, "FilterBroUpdate.zip")))
+                    {
+                        strExtractDirectory = Path.Combine(strFilterBroPath, "FilterBroUpdate");
+                        // Remove the extracted directory if it exists
+                        try
+                        {
+                            Directory.Delete(strExtractDirectory, true);
+                        }
+                        catch (DirectoryNotFoundException) { }
+                        try
+                        {
+                            zip.ExtractToDirectory(strExtractDirectory);
+                            // Open up the FilterBro updater on close
+                            bInstallUpdate = true;
+                        } // If the extract fails, make sure we don't try to update
+                        catch (Exception) { bInstallUpdate = false; }
+                    }
+
+                    if (bInstallUpdate)
+                    {
+                        // Install the updater first
+                        // Copy the updater from the release
+                        lblStatus.Text = "Installing updater....";
+                        lblStatus.Refresh();
+                        
+                        try
+                        {
+                            // We copy and then delete as File.Copy allows us to overwrite files
+                            File.Copy(Path.Combine(Directory.GetDirectories(Path.Combine(strFilterBroPath, "FilterBroUpdate"))[0].ToString(),
+                                "FilterBroUpdater.exe"), "FilterBroUpdater.exe", true);
+                            File.Delete(Path.Combine(Directory.GetDirectories(Path.Combine(strFilterBroPath, "FilterBroUpdate"))[0].ToString(),
+                                "FilterBroUpdater.exe"));
+                        }
+                        catch (FileNotFoundException) { }   // This just means we couldn't find the updater, during testing this is because we update from
+                                                            // an old version that lacks the updater
+                        catch (Exception)
+                        {
+                            // In the event of any other exception, we want to stop dead in our tracks.
+                            bInstallUpdate = false;
+                            // Show that there was a problem
+                            lblStatus.Text = "Error copying FilterBro updater.";
+                            lblStatus.Refresh();
+                        }
+
+                        // Check to make sure we didn't encounter an issue installing/deleting the updater file
+                        if (bInstallUpdate)
+                        {
+                            // Show that we are restarting to update
+                            lblStatus.Text = "Closing to finish update....";
+                            lblStatus.Refresh();
+                            Close();
+                        }
+                    }
+                    else
+                    {
+                        // Re-enable all controls from before
+                        btnCheckUpdate.Enabled = true;
+                        btnCustomSoundsOpen.Enabled = true;
+                        btnDelete.Enabled = true;
+                        btnRefresh.Enabled = true;
+                        btnReinstall.Enabled = true;
+                        cboFilterSelector.Enabled = true;
+                        // Show that there was a problem extracting the update
+                        lblStatus.Text = "Failed to extract FilterBro update.";
+                        lblStatus.Refresh();
+                    }
+                }
+            }
         }
 
         /*
@@ -677,6 +787,12 @@ namespace FilterBro
         private void btnReinstall_Click(object sender, EventArgs e)
         {
             CheckUpdateSelectedFilter(true);
+        }
+
+        private void frmFilterBro_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (bInstallUpdate)
+                Process.Start("FBUpdater.exe");
         }
     }
 }
