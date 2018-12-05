@@ -87,7 +87,7 @@
             this.cboWith.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.cboWith.ForeColor = System.Drawing.SystemColors.ControlLightLight;
             this.cboWith.FormattingEnabled = true;
-            this.cboWith.Location = new System.Drawing.Point(65, 83);
+            this.cboWith.Location = new System.Drawing.Point(65, 81);
             this.cboWith.Name = "cboWith";
             this.cboWith.Size = new System.Drawing.Size(182, 21);
             this.cboWith.TabIndex = 3;
