@@ -21,7 +21,7 @@ namespace FilterBro
     public partial class frmFilterBro : Form
     {
         // Version string shows in the title bar and is used to check for updates.
-        private static string VERSION = "1.2";
+        private static string VERSION = "1.2.1";
         // GitHub info for checking for updates
         private static string GHDEV = "Skyline969";
         private static string GHPROJ = "FilterBro";
