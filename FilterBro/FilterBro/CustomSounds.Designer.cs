@@ -43,6 +43,9 @@
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnRemove = new System.Windows.Forms.Button();
             this.lblEditingFor = new System.Windows.Forms.Label();
+            this.lblPreviewSounds = new System.Windows.Forms.Label();
+            this.btnPreviewPreview = new System.Windows.Forms.Button();
+            this.cboPreviewList = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvActions)).BeginInit();
             this.SuspendLayout();
             // 
@@ -118,7 +121,7 @@
             this.dgvActions.DefaultCellStyle = dataGridViewCellStyle2;
             this.dgvActions.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             this.dgvActions.GridColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.dgvActions.Location = new System.Drawing.Point(12, 114);
+            this.dgvActions.Location = new System.Drawing.Point(12, 138);
             this.dgvActions.MultiSelect = false;
             this.dgvActions.Name = "dgvActions";
             this.dgvActions.ReadOnly = true;
@@ -138,7 +141,7 @@
             this.dgvActions.ShowCellToolTips = false;
             this.dgvActions.ShowEditingIcon = false;
             this.dgvActions.ShowRowErrors = false;
-            this.dgvActions.Size = new System.Drawing.Size(360, 98);
+            this.dgvActions.Size = new System.Drawing.Size(360, 107);
             this.dgvActions.TabIndex = 4;
             // 
             // btnPreviewReplace
@@ -183,7 +186,7 @@
             // 
             this.btnApply.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.btnApply.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnApply.Location = new System.Drawing.Point(12, 226);
+            this.btnApply.Location = new System.Drawing.Point(12, 251);
             this.btnApply.Name = "btnApply";
             this.btnApply.Size = new System.Drawing.Size(75, 23);
             this.btnApply.TabIndex = 8;
@@ -195,7 +198,7 @@
             // 
             this.btnCancel.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCancel.Location = new System.Drawing.Point(297, 226);
+            this.btnCancel.Location = new System.Drawing.Point(297, 251);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 9;
@@ -224,12 +227,50 @@
             this.lblEditingFor.Text = "Editing custom sounds for ";
             this.lblEditingFor.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // lblPreviewSounds
+            // 
+            this.lblPreviewSounds.AutoSize = true;
+            this.lblPreviewSounds.Location = new System.Drawing.Point(12, 114);
+            this.lblPreviewSounds.Name = "lblPreviewSounds";
+            this.lblPreviewSounds.Size = new System.Drawing.Size(45, 13);
+            this.lblPreviewSounds.TabIndex = 12;
+            this.lblPreviewSounds.Text = "Preview";
+            // 
+            // btnPreviewPreview
+            // 
+            this.btnPreviewPreview.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.btnPreviewPreview.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnPreviewPreview.ForeColor = System.Drawing.SystemColors.ControlLightLight;
+            this.btnPreviewPreview.Location = new System.Drawing.Point(316, 109);
+            this.btnPreviewPreview.Name = "btnPreviewPreview";
+            this.btnPreviewPreview.Size = new System.Drawing.Size(56, 23);
+            this.btnPreviewPreview.TabIndex = 14;
+            this.btnPreviewPreview.Text = "Preview";
+            this.btnPreviewPreview.UseVisualStyleBackColor = false;
+            this.btnPreviewPreview.Click += new System.EventHandler(this.btnPreviewPreview_Click);
+            // 
+            // cboPreviewList
+            // 
+            this.cboPreviewList.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.cboPreviewList.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboPreviewList.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.cboPreviewList.ForeColor = System.Drawing.SystemColors.ControlLightLight;
+            this.cboPreviewList.FormattingEnabled = true;
+            this.cboPreviewList.Location = new System.Drawing.Point(65, 110);
+            this.cboPreviewList.Name = "cboPreviewList";
+            this.cboPreviewList.Size = new System.Drawing.Size(245, 21);
+            this.cboPreviewList.TabIndex = 15;
+            this.cboPreviewList.SelectedIndexChanged += new System.EventHandler(this.cboPreviewList_SelectedIndexChanged);
+            // 
             // frmCustomSounds
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlText;
-            this.ClientSize = new System.Drawing.Size(384, 261);
+            this.ClientSize = new System.Drawing.Size(384, 286);
+            this.Controls.Add(this.cboPreviewList);
+            this.Controls.Add(this.btnPreviewPreview);
+            this.Controls.Add(this.lblPreviewSounds);
             this.Controls.Add(this.lblEditingFor);
             this.Controls.Add(this.btnRemove);
             this.Controls.Add(this.btnCancel);
@@ -273,5 +314,8 @@
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Button btnRemove;
         private System.Windows.Forms.Label lblEditingFor;
+        private System.Windows.Forms.Label lblPreviewSounds;
+        private System.Windows.Forms.Button btnPreviewPreview;
+        private System.Windows.Forms.ComboBox cboPreviewList;
     }
 }

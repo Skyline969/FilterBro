@@ -31,6 +31,8 @@ namespace FilterBro
         private List<string> lstDefaultSounds;
         // A list of the custom sounds available
         private List<string> lstCustomSounds;
+        // A list of all default sounds
+        private List<string> lstPreviewSounds;
         // Supported file extensions for sounds
         public static string strSupportedExtensions = "*.mp3,*.wav";
         // URL to stream built-in sounds from
@@ -46,6 +48,7 @@ namespace FilterBro
             dictDefaultText = new Dictionary<string, string>();
             lstDefaultSounds = new List<string>();
             lstCustomSounds = new List<string>();
+            lstPreviewSounds = new List<string>();
             bAutoApply = false;
 
             lblEditingFor.Text = "Editing custom sounds for " + frmParent.GetSelectedFilter();
@@ -53,6 +56,13 @@ namespace FilterBro
 
         private void frmCustomSounds2_Load(object sender, EventArgs e)
         {
+            for (int i = 1; i <= 16; i++)
+            {
+                string strDisplay = "Alert Sound " + i;
+                dictDefaultSounds.Add(strDisplay, "AlertSound" + i + ".mp3");
+                dictDefaultText.Add(strDisplay, "PlayAlertSound " + i + " ");
+                lstPreviewSounds.Add(strDisplay);
+            }
             // Add the default sounds that appear in the selected filter
             List<string> filters = frmParent.GetSelectedFilterFiles();
             foreach (string filter in filters)
@@ -73,14 +83,13 @@ namespace FilterBro
                     {
                         string strDisplay = "Alert Sound " + strAlertSound;
                         lstDefaultSounds.Add(strDisplay);
-                        dictDefaultSounds.Add(strDisplay, "AlertSound" + strAlertSound + ".mp3");
-                        dictDefaultText.Add(strDisplay, "PlayAlertSound " + strAlertSound + " ");
                     }
                 }
             }
 
             // Sort the found default sounds
             lstDefaultSounds = lstDefaultSounds.OrderBy(s => int.Parse(s.Substring(12))).ToList<string>();
+            lstPreviewSounds = lstPreviewSounds.OrderBy(s => int.Parse(s.Substring(12))).ToList<string>();
 
             // For every audio file in the PoE directory, add it to the list. Add any other popular
             // file extensions here.
@@ -91,6 +100,7 @@ namespace FilterBro
             // Populate our combo boxes
             cboReplace.DataSource = lstDefaultSounds;
             cboWith.DataSource = lstCustomSounds;
+            cboPreviewList.DataSource = lstPreviewSounds;
 
             // Get the DataGridView ready to accept data.
             dgvActions.Columns.Add("Replace", "Replace");
@@ -101,6 +111,9 @@ namespace FilterBro
 
             // Set the Replace preview button visibility, allowing users to provide the files
             CheckReplaceSoundExists();
+
+            // Set the Preview preview button visibility, allowing users to provide the files
+            CheckPreviewSoundExists();
 
             if (bAutoApply)
                 ApplyButtonClicked();
@@ -116,6 +129,7 @@ namespace FilterBro
             //foreach(KeyValuePair<string, string> action in dictReplaceActions)
             foreach (KeyValuePair<string, string> action in frmParent.dictFilterSounds[frmParent.GetSelectedFilter()])
                 dgvActions.Rows.Add(action.Key, action.Value);
+            dgvActions.Sort(dgvActions.Columns["Replace"], ListSortDirection.Ascending);
         }
 
         /*
@@ -302,9 +316,40 @@ namespace FilterBro
          */
         private void CheckReplaceSoundExists()
         {
-            bool blComboItemExists = File.Exists(dictDefaultSounds[cboReplace.SelectedItem.ToString()]);
+            bool blComboItemExists = false;
+            try
+            {
+                blComboItemExists = File.Exists(dictDefaultSounds[cboReplace.SelectedItem.ToString()]);
+            } catch (NullReferenceException) { }
             btnPreviewReplace.Visible = blComboItemExists;
             btnPreviewReplace.Enabled = blComboItemExists;
+        }
+
+        private void cboPreviewList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            CheckPreviewSoundExists();
+        }
+
+        /*
+         * Enables/disables the Preview Preview button based on whether the preview file exists.
+         */
+        private void CheckPreviewSoundExists()
+        {
+            bool blPreviewItemExists = false;
+            try
+            {
+                blPreviewItemExists = File.Exists(dictDefaultSounds[cboPreviewList.SelectedItem.ToString()]);
+            }
+            catch (NullReferenceException) { }
+            btnPreviewPreview.Visible = blPreviewItemExists;
+            btnPreviewPreview.Enabled = blPreviewItemExists;
+        }
+
+        private void btnPreviewPreview_Click(object sender, EventArgs e)
+        {
+            WindowsMediaPlayer snd = new WindowsMediaPlayer();
+            snd.URL = dictDefaultSounds[cboPreviewList.SelectedItem.ToString()];
+            snd.controls.play();
         }
     }
 }
