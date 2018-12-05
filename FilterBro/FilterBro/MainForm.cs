@@ -179,9 +179,9 @@ namespace FilterBro
                         {
                             // We copy and then delete as File.Copy allows us to overwrite files
                             File.Copy(Path.Combine(Directory.GetDirectories(Path.Combine(strFilterBroPath, "FilterBroUpdate"))[0].ToString(),
-                                "FilterBroUpdater.exe"), "FilterBroUpdater.exe", true);
+                                "FBUpdater.exe"), "FBUpdater.exe", true);
                             File.Delete(Path.Combine(Directory.GetDirectories(Path.Combine(strFilterBroPath, "FilterBroUpdate"))[0].ToString(),
-                                "FilterBroUpdater.exe"));
+                                "FBUpdater.exe"));
                         }
                         catch (FileNotFoundException) { }   // This just means we couldn't find the updater, during testing this is because we update from
                                                             // an old version that lacks the updater
