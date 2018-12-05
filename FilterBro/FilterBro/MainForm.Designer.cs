@@ -147,7 +147,7 @@
             this.btnCustomSoundsOpen.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.btnCustomSoundsOpen.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnCustomSoundsOpen.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.btnCustomSoundsOpen.Location = new System.Drawing.Point(16, 197);
+            this.btnCustomSoundsOpen.Location = new System.Drawing.Point(16, 168);
             this.btnCustomSoundsOpen.Name = "btnCustomSoundsOpen";
             this.btnCustomSoundsOpen.Size = new System.Drawing.Size(105, 23);
             this.btnCustomSoundsOpen.TabIndex = 9;
