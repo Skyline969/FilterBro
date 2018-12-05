@@ -20,13 +20,15 @@ namespace FilterBro
     public partial class frmFilterBro : Form
     {
         // Version string shows in the title bar
-        private static string VERSION = "1.1";
+        private static string VERSION = "1.2";
         // Stores a mapping of filter name : installed version
         private Dictionary<string, string> dictLocalVersions;
         // Stores a mapping of GitHub project : GitHub username
         private Dictionary<string, string> dictGHProjects;
         // Stores a mapping of filter name : GitHub project
         private Dictionary<string, string> dictGHMap;
+        // Stores a mapping of custom filter sounds by filter type
+        public Dictionary<string, Dictionary<string, string>> dictFilterSounds;
         // Stores a mapping of filter name : list of installed filters pertaining to that filter
         private Dictionary<string, List<string>> dictLocalFiles;
         // Where the PoE folder is: My Documents\My Games\Path of Exile, wherever My Documents happens to be on the system.
@@ -50,6 +52,7 @@ namespace FilterBro
             this.dictGHProjects = new Dictionary<string, string>();
             this.dictGHMap = new Dictionary<string, string>();
             this.dictLocalFiles = new Dictionary<string, List<string>>();
+            this.dictFilterSounds = new Dictionary<string, Dictionary<string, string>>();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -88,6 +91,15 @@ namespace FilterBro
             // Check installed filters
             CheckFilterVersionLocal();
 
+            // Instantiate custom sounds dictionary
+            foreach(var item in cboFilterSelector.Items)
+                dictFilterSounds.Add(item.ToString(), new Dictionary<string, string>());
+
+            // Load custom sounds from config file
+            LoadCustomSounds();
+
+            //MessageBox.Show(JsonConvert.SerializeObject(dictFilterSounds));
+
             // Update the text box
             UpdateVersionTextBoxes();
 
@@ -96,6 +108,34 @@ namespace FilterBro
 
             // Shift focus away from the combo box as it highlights it
             this.ActiveControl = btnCheckUpdate;
+        }
+
+        /*
+         * Opens the config file and loads all custom sound mappings saved.
+         */
+        private void LoadCustomSounds()
+        {
+            string strConfig = "";
+            // Create the config file if it doesn't exist
+            if (!File.Exists("sound_config.json"))
+                File.Create("sound_config.json");
+            else
+                strConfig = File.ReadAllText("sound_config.json");
+
+            // Parse the config file
+            Dictionary<string, Dictionary<string, string>> dictConfig = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(strConfig);
+
+            // The config file will be null if it is empty, this is fine.
+            if (dictConfig != null)
+            {
+                foreach (KeyValuePair<string, Dictionary<string, string>> filter in dictConfig)
+                {
+                    if (!dictFilterSounds.Keys.Contains<string>(filter.Key))
+                        dictFilterSounds.Add(filter.Key, filter.Value);
+                    else
+                        dictFilterSounds[filter.Key] = filter.Value;
+                }
+            }
         }
 
         /*
@@ -396,6 +436,17 @@ namespace FilterBro
             lblStatus.Text = "";
             lblStatus.Refresh();
             txtLatestVersion.Text = txtCurrentVersion.Text;
+
+            // Prompt the user if they would like to apply custom sounds if any exist
+            if (dictFilterSounds[GetSelectedFilter()].Count > 0)
+            {
+                if (MessageBox.Show("Apply saved custom sounds?", "Custom Sounds", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    frmCustomSounds csForm = new frmCustomSounds(this);
+                    csForm.bAutoApply = true;
+                    csForm.ShowDialog();
+                }
+            }
 
             cboFilterSelector.Enabled = true;
         }

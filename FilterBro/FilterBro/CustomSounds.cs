@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -18,6 +19,8 @@ namespace FilterBro
     {
         // Reference to the parent form
         private frmFilterBro frmParent;
+        // Flagged from the parent if the apply button needs to be clicked automatically
+        public bool bAutoApply;
         // Stores a mapping of built in sound : sound to replace it with
         private Dictionary<string, string> dictReplaceActions;
         // Stores a mapping of combo box value : sound file
@@ -43,32 +46,9 @@ namespace FilterBro
             dictDefaultText = new Dictionary<string, string>();
             lstDefaultSounds = new List<string>();
             lstCustomSounds = new List<string>();
+            bAutoApply = false;
 
             lblEditingFor.Text = "Editing custom sounds for " + frmParent.GetSelectedFilter();
-        }
-
-        /*
-         * Takes in a list of filter files to open up and replace sound files in.
-         */
-        private void ReplaceFilterSounds(List<string> filters)
-        {
-            // Go through each passed in filter
-            foreach (string filter in filters)
-            {
-                // Load the entire filter
-                string strFilterContents = File.ReadAllText(filter);
-                // Go through the replace action dictionary and find and replace all instances of each default
-                // sound with the corresponding custom sound
-                foreach(KeyValuePair<string, string> action in dictReplaceActions)
-                    strFilterContents = strFilterContents.Replace(dictDefaultText[action.Key], "CustomAlertSound \"" + action.Value + "\" ");
-
-                // Save the updated file
-                //File.WriteAllText(Path.Combine(frmFilterBro.strPathOfExilePath, Path.GetFileNameWithoutExtension(filter) + "-custom.filter"), strFilterContents);
-                File.WriteAllText(filter, strFilterContents);
-            }
-            dictReplaceActions.Clear();
-            dgvActions.Rows.Clear();
-            MessageBox.Show("Filters updated successully!");
         }
 
         private void frmCustomSounds2_Load(object sender, EventArgs e)
@@ -116,8 +96,14 @@ namespace FilterBro
             dgvActions.Columns.Add("Replace", "Replace");
             dgvActions.Columns.Add("With", "With");
 
+            // Update the data grid with existing actions
+            UpdateDataGrid();
+
             // Set the Replace preview button visibility, allowing users to provide the files
             CheckReplaceSoundExists();
+
+            if (bAutoApply)
+                ApplyButtonClicked();
         }
 
         /*
@@ -127,8 +113,38 @@ namespace FilterBro
         private void UpdateDataGrid()
         {
             dgvActions.Rows.Clear();
-            foreach(KeyValuePair<string, string> action in dictReplaceActions)
+            //foreach(KeyValuePair<string, string> action in dictReplaceActions)
+            foreach (KeyValuePair<string, string> action in frmParent.dictFilterSounds[frmParent.GetSelectedFilter()])
                 dgvActions.Rows.Add(action.Key, action.Value);
+        }
+
+        /*
+         * Takes in a list of filter files to open up and replace sound files in.
+         */
+        public void ReplaceFilterSounds(List<string> filters)
+        {
+            // Go through each passed in filter
+            foreach (string filter in filters)
+            {
+                // Load the entire filter
+                string strFilterContents = File.ReadAllText(filter);
+                // Go through the replace action dictionary and find and replace all instances of each default
+                // sound with the corresponding custom sound
+                //foreach(KeyValuePair<string, string> action in dictReplaceActions)
+                foreach (KeyValuePair<string, string> action in frmParent.dictFilterSounds[frmParent.GetSelectedFilter()])
+                {
+                    try
+                    {
+                        strFilterContents = strFilterContents.Replace(dictDefaultText[action.Key], "CustomAlertSound \"" + action.Value + "\" ");
+                    } // The key might not exist if we are using a saved config. This is fine.
+                    catch (KeyNotFoundException) { }
+                }
+                // Save the updated file
+                File.WriteAllText(filter, strFilterContents);
+            }
+            //dictReplaceActions.Clear();
+            //dgvActions.Rows.Clear();
+            MessageBox.Show("Filters updated successully!");
         }
 
         /*
@@ -198,10 +214,14 @@ namespace FilterBro
          */
         private void btnAdd_Click(object sender, EventArgs e)
         {
-            if (dictReplaceActions.ContainsKey(cboReplace.SelectedItem.ToString()))
+            if (frmParent.dictFilterSounds[frmParent.GetSelectedFilter()].ContainsKey(cboReplace.SelectedItem.ToString()))
+                frmParent.dictFilterSounds[frmParent.GetSelectedFilter()][cboReplace.SelectedItem.ToString()] = cboWith.SelectedItem.ToString();
+            else
+                frmParent.dictFilterSounds[frmParent.GetSelectedFilter()].Add(cboReplace.SelectedItem.ToString(), cboWith.SelectedItem.ToString());
+            /*if (dictReplaceActions.ContainsKey(cboReplace.SelectedItem.ToString()))
                 dictReplaceActions[cboReplace.SelectedItem.ToString()] = cboWith.SelectedItem.ToString();
             else
-                dictReplaceActions.Add(cboReplace.SelectedItem.ToString(), cboWith.SelectedItem.ToString());
+                dictReplaceActions.Add(cboReplace.SelectedItem.ToString(), cboWith.SelectedItem.ToString());*/
             UpdateDataGrid();
         }
 
@@ -213,10 +233,16 @@ namespace FilterBro
         {
             try
             {
-                dictReplaceActions.Remove(dgvActions.SelectedRows[0].Cells[0].Value.ToString());
+                //dictReplaceActions.Remove(dgvActions.SelectedRows[0].Cells[0].Value.ToString());
+                frmParent.dictFilterSounds[frmParent.GetSelectedFilter()].Remove(dgvActions.SelectedRows[0].Cells[0].Value.ToString());
                 UpdateDataGrid();
             }
             catch (ArgumentOutOfRangeException) { }
+        }
+
+        private void btnApply_Click(object sender, EventArgs e)
+        {
+            ApplyButtonClicked();
         }
 
         /*
@@ -224,8 +250,9 @@ namespace FilterBro
          * and begin replacing sounds based on the action dictionary. Notify the user if the filter
          * is not currently installed.
          */
-        private void btnApply_Click(object sender, EventArgs e)
+        private void ApplyButtonClicked()
         {
+            SaveCustomSounds();
             List<string> lstSelectedFilterFiles = frmParent.GetSelectedFilterFiles();
             if (!lstSelectedFilterFiles.Any())
                 MessageBox.Show("The currently selected loot filter is not installed.");
@@ -234,9 +261,18 @@ namespace FilterBro
             this.Close();
         }
 
+        private void SaveCustomSounds()
+        {
+            // Serialize the custom sounds dictionary
+            string strCustomSounds = JsonConvert.SerializeObject(frmParent.dictFilterSounds, Formatting.Indented);
+            // Write the custom sounds
+            File.WriteAllText("sound_config.json", strCustomSounds);
+        }
+
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.Close();
+            if (MessageBox.Show("Close the editor without applying the selected custom sounds?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                this.Close();
         }
 
         /*
@@ -245,11 +281,12 @@ namespace FilterBro
          */
         private void frmCustomSounds_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (dictReplaceActions.Count > 0)
+            //if (dictReplaceActions.Count > 0)
+            /*if (frmParent.dictFilterSounds[frmParent.GetSelectedFilter()].Count > 0)
             {
                 if (MessageBox.Show("Close the editor without applying the selected custom sounds?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.No)
                     e.Cancel = true;
-            }
+            }*/
         }
 
         /*
