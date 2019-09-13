@@ -28,3 +28,4 @@ D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Debug\FilterBro.csproj.GenerateResou
 D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Debug\FilterBro.frmCustomSounds.resources
 D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Debug\Interop.WMPLib.dll
 D:\GitHub\FilterBro\FilterBro\FilterBro\obj\Debug\FilterBro.csproj.ResolveComReference.cache
+D:\GitHub\FilterBro\FilterBro\FilterBro\bin\Debug\PathOfExile.dll

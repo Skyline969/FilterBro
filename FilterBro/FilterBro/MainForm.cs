@@ -15,13 +15,14 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octokit;
 using System.Diagnostics;
+using PathOfExile.GGPK;
 
 namespace FilterBro
 {
     public partial class frmFilterBro : Form
     {
         // Version string shows in the title bar and is used to check for updates.
-        private static string VERSION = "1.2.1";
+        private static string VERSION = "1.2.2";
         // GitHub info for checking for updates
         private static string GHDEV = "Skyline969";
         private static string GHPROJ = "FilterBro";
@@ -41,6 +42,8 @@ namespace FilterBro
         public static string strPathOfExilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString(), "My Games", "Path of Exile");
         // Where FilterBro stores its stuff. Just a subfolder in the Path of Exile folder.
         public static string strFilterBroPath = Path.Combine(strPathOfExilePath, "FilterBro");
+
+        private static string strGGPKTree = "";
 
         // Regex for FilterBro-downloaded filters
         Regex rg_FilterBro_title = new Regex(@"\#\s{0,}FilterBro-X-Filter\:.*");
@@ -113,9 +116,81 @@ namespace FilterBro
 
             // Shift focus away from the combo box as it highlights it
             this.ActiveControl = btnCheckUpdate;
+        }
 
+        private void frmFilterBro_Shown(object sender, EventArgs e)
+        {
             // Check for a program update
             CheckForApplicationUpdate();
+
+            /*// Test LibPathOfExile
+            if (!File.Exists("AlertSound1.mp3"))
+                ExtractAlertSounds();*/
+        }
+
+        private void ExtractAlertSounds()
+        {
+            if (MessageBox.Show("You do not seem to have the default filter sounds.\n"
+                                +"Do you wish to load them from Path of Exile's Content.ggpk file?",
+                                        "Load Filter Sounds", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                string strGGPK = "";
+
+                // Check the common locations for Content.GGPK
+                if (File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Grinding Gear Games\Path of Exile\Content.ggpk")))
+                    strGGPK = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Grinding Gear Games\Path of Exile\Content.ggpk");
+                else if (File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Steam\steamapps\common\Path of Exile\Content.ggpk")))
+                    strGGPK = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Steam\steamapps\common\Path of Exile\Content.ggpk");
+
+                if (strGGPK == "")
+                {
+                    OpenFileDialog ofdGGPK = new OpenFileDialog();
+                    ofdGGPK.InitialDirectory = @"C:\";
+                    ofdGGPK.Filter = "Content.ggpk (Content.ggpk)|Content.ggpk|All files (*.*)|*.*";
+
+                    if (ofdGGPK.ShowDialog() == DialogResult.OK)
+                        strGGPK = ofdGGPK.FileName;
+                }
+
+                if (strGGPK != "")
+                {
+                    GGPKFile ggpk = new GGPKFile(strGGPK, false);
+
+                    lblStatus.Text = "Opening Content.ggpk....";
+                    lblStatus.Refresh();
+
+                    ggpk.Load();
+
+                    lblStatus.Text = "Processing Content.ggpk....";
+                    lblStatus.Refresh();
+
+                    BrowseTree(ggpk.GetDirectoryTree(), "");
+                    File.WriteAllText("GGPKTree.txt", strGGPKTree);
+
+                    lblStatus.Text = "";
+                    lblStatus.Refresh();
+                }
+            }
+        }
+
+        public static void BrowseTree(PathOfExile.GGPK.TreeNode node, string path)
+        {
+            if (node.IsFileNode)
+            {
+                var fileNode = node.FileNode;
+                var filePath = Path.Combine(path, fileNode.FileName);
+                //if (filePath.ToLower().Contains("filter"))
+                    strGGPKTree += filePath + "\n";
+            }
+            else if (node.IsDirectoryTreeNode)
+            {
+                var dirNode = node.DirectoryTreeNode;
+                var subPath = Path.Combine(path, dirNode.Node.Name);
+                foreach (var child in dirNode.Children)
+                {
+                    BrowseTree(child, subPath);
+                }
+            }
         }
 
         private async void CheckForApplicationUpdate()

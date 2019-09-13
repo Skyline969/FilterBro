@@ -208,6 +208,7 @@
             this.Text = "FilterBro";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmFilterBro_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.Shown += new System.EventHandler(this.frmFilterBro_Shown);
             this.ResumeLayout(false);
             this.PerformLayout();
 

@@ -60,7 +60,7 @@ namespace FilterBro
             {
                 string strDisplay = "Alert Sound " + i;
                 dictDefaultSounds.Add(strDisplay, "AlertSound" + i + ".mp3");
-                dictDefaultText.Add(strDisplay, "PlayAlertSound " + i + " ");
+                dictDefaultText.Add(strDisplay, "PlayAlertSound " + i);
                 lstPreviewSounds.Add(strDisplay);
             }
             // Add the default sounds that appear in the selected filter
@@ -73,7 +73,7 @@ namespace FilterBro
                 contents = sr.ReadToEnd();
                 sr.Close();
                 // Scan for any PlayAlertSound # occurrences
-                Regex ItemRegex = new Regex(@"PlayAlertSound \d{1,}", RegexOptions.Compiled);
+                Regex ItemRegex = new Regex(@"PlayAlertSound\s{1,}\d{1,}", RegexOptions.Compiled);
                 foreach (Match match in ItemRegex.Matches(contents))
                 {
                     // Get the number
@@ -149,7 +149,23 @@ namespace FilterBro
                 {
                     try
                     {
-                        strFilterContents = strFilterContents.Replace(dictDefaultText[action.Key], "CustomAlertSound \"" + action.Value + "\" ");
+                        // We need to find all occurrences of the alert sound as well as the volume. We need to strip the volume
+                        // as PoE does not use volume for custom alert sounds.
+                        Regex ItemRegex = new Regex(dictDefaultText[action.Key] + @"\s{1,}\d{0,}", RegexOptions.Compiled);
+                        var ReplaceMatches = ItemRegex.Matches(strFilterContents);
+                        
+                        // Replace the PlayAlertSound occurrences with CustomAlertSound values the user has defined.
+                        foreach (var match in ReplaceMatches.Cast<Match>().Reverse())
+                        {
+                            StringBuilder sbBuilder = new StringBuilder();
+                            sbBuilder.Append(strFilterContents.Substring(0, match.Index));
+                            sbBuilder.Append("CustomAlertSound \"" + action.Value + "\" ");
+                            sbBuilder.Append(strFilterContents.Substring(match.Index + match.Length));
+                            strFilterContents = sbBuilder.ToString();
+                        }
+                        // Old replacement code, now defunct as it does not replace volume which breaks custom sounds.
+                        // Will be removed in a future update.
+                        //strFilterContents = strFilterContents.Replace(dictDefaultText[action.Key], "CustomAlertSound \"" + action.Value + "\" ");
                     } // The key might not exist if we are using a saved config. This is fine.
                     catch (KeyNotFoundException) { }
                 }

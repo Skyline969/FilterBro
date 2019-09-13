@@ -59,6 +59,9 @@
       <HintPath>..\packages\Octokit.0.31.0\lib\net45\Octokit.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="PathOfExile">
+      <HintPath>..\..\PathOfExile.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
